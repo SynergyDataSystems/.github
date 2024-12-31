@@ -1,0 +1,37 @@
+name: Stale
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *" # UTC - every morning at 8am est
+
+permissions:
+  contents: write # needed to delete branches
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale-cleanup:
+    name: Stale Cleanup
+    runs-on: psiprod-linux
+    steps:
+      - name: Close Stale PRs
+        uses: actions/stale@v9
+        with:
+          ascending: true
+          # PRs will be marked stale at 60 days and closed w/ branch delete at 67 days
+          days-before-stale: 60 # this is the default - added for visibility
+          days-before-close: 7 # this is the default - added for visibility
+          exempt-pr-labels: WIP,keep,no-stale
+          delete-branch: true
+          operations-per-run: 200
+          debug-only: false # true for dry-run
+      - name: Delete Stale Branches
+        uses: crs-k/stale-branches@v6.0.2
+        with:
+          days-before-stale: 60 # default 120
+          days-before-delete: 90 # default 180
+          pr-check: true # if the branch has a PR, let the stale PR step above handle it
+          rate-limit: false
+          ignore-issue-interaction: true
+          dry-run: false
